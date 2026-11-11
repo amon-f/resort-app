@@ -18,7 +18,7 @@
         .eyebrow { color: var(--green); font-size: 11px; font-weight: 750; letter-spacing: 1.5px; text-transform: uppercase; }
         h1 { margin: 10px 0; font: 400 clamp(36px, 5vw, 54px)/1.08 Georgia, serif; }
         .summary { margin: 0; color: var(--muted); }
-        .search { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 14px; margin: 28px 0 36px; padding: 20px; border: 1px solid var(--line); border-radius: 7px; background: #fffefa; }
+        .search { display: grid; grid-template-columns: 1fr 1fr .7fr auto; align-items: end; gap: 14px; margin: 28px 0 36px; padding: 20px; border: 1px solid var(--line); border-radius: 7px; background: #fffefa; }
         label { display: block; color: #46554a; font-size: 12px; font-weight: 650; }
         input { display: block; width: 100%; margin-top: 7px; padding: 11px; border: 1px solid #cfd4c9; border-radius: 4px; background: white; font: inherit; }
         button, .book { display: inline-block; padding: 12px 16px; border: 0; border-radius: 4px; background: var(--green); color: white; font: inherit; font-weight: 700; cursor: pointer; }
@@ -45,7 +45,7 @@
 <main class="wrap">
     <div class="eyebrow">Your stay</div>
     <h1>Rooms for your dates</h1>
-    <p class="summary">{{ \Illuminate\Support\Carbon::parse($arrivalDate)->format('M j, Y') }} – {{ \Illuminate\Support\Carbon::parse($departureDate)->format('M j, Y') }}</p>
+    <p class="summary">{{ \Illuminate\Support\Carbon::parse($arrivalDate)->format('M j, Y') }} – {{ \Illuminate\Support\Carbon::parse($departureDate)->format('M j, Y') }} · {{ $guestCount }} {{ \Illuminate\Support\Str::plural('guest', $guestCount) }}</p>
 
     <form class="search" action="{{ route('availability.search') }}" method="GET">
         <label>Arrival date
@@ -54,24 +54,29 @@
         <label>Departure date
             <input type="date" name="departure_date" value="{{ $departureDate }}" required>
         </label>
+        <label>Guests
+            <input type="number" name="guests" min="1" max="4" value="{{ $guestCount }}" required>
+        </label>
         <button type="submit">Search again</button>
     </form>
 
     <section class="rooms" aria-label="Room availability">
         @foreach ($rooms as $room)
             <article>
-                @if ($room['available'])
+                @if (! $room['fits_guests'])
+                    <span class="status unavailable">Too small for {{ $guestCount }} guests</span>
+                @elseif ($room['dates_available'])
                     <span class="status available">Available</span>
                 @else
                     <span class="status unavailable">Unavailable for these dates</span>
                 @endif
                 <h2>{{ $room['name'] }}</h2>
-                <div class="type">{{ $room['type'] }}</div>
+                <div class="type">{{ $room['type'] }} · Up to {{ $room['capacity'] }} guests</div>
                 <div class="price">KSh {{ number_format($room['price']) }} <small>/ night</small></div>
                 @if ($room['available'])
-                    <a class="book" href="{{ route('home', ['room_name' => $room['name'], 'arrival_date' => $arrivalDate, 'departure_date' => $departureDate]) }}#contact">Request this stay</a>
+                    <a class="book" href="{{ route('home', ['room_name' => $room['name'], 'arrival_date' => $arrivalDate, 'departure_date' => $departureDate, 'guests' => $guestCount]) }}#contact">Request this stay</a>
                 @else
-                    <div class="unavailable-copy">Try another room or change your dates.</div>
+                    <div class="unavailable-copy">{{ $room['fits_guests'] ? 'Try another room or change your dates.' : 'This room accommodates up to ' . $room['capacity'] . ' guests.' }}</div>
                 @endif
             </article>
         @endforeach

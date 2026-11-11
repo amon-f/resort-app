@@ -28,6 +28,13 @@
         .foreground { position: absolute; left: -5%; right: -5%; bottom: -45px; height: 120px; border-radius: 50% 50% 0 0; background: #375d47; }
         .art-label { position: absolute; z-index: 2; left: 21px; bottom: 19px; color: white; font-size: 11px; letter-spacing: 1.1px; text-transform: uppercase; }
         .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 4px 0 19px; }
+        .availability-search { margin: 0 0 48px; padding: 22px; border: 1px solid var(--line); border-radius: 7px; background: #fffefa; }
+        .availability-search h2 { font-size: 26px; }
+        .search-fields { display: grid; grid-template-columns: 1fr 1fr .7fr auto; align-items: end; gap: 14px; margin-top: 18px; }
+        .search-fields label { display: block; color: #46554a; font-size: 12px; font-weight: 650; }
+        .search-fields input { display: block; width: 100%; margin-top: 7px; padding: 11px; border: 1px solid #cfd4c9; border-radius: 4px; background: white; font: inherit; }
+        .search-fields button { padding: 12px 17px; border: 0; border-radius: 4px; background: var(--green); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+        .search-error { margin: 12px 0 0; color: #9b4537; font-size: 12px; }
         h2 { margin: 7px 0 0; font: 400 34px/1.15 Georgia, serif; letter-spacing: -.8px; }
         .dates { padding: 10px 13px; border: 1px solid var(--line); border-radius: 5px; color: #58645b; font-size: 12px; white-space: nowrap; }
         .rooms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding-bottom: 55px; }
@@ -48,7 +55,7 @@
         .amenity { color: #69746b; font-size: 10px; } .book { padding: 10px 13px; font-size: 11px; white-space: nowrap; }
         .note { margin: 0 0 55px; padding: 17px 20px; border-left: 3px solid #b99b5d; background: #eeece3; color: #5d675e; font-size: 12px; line-height: 1.65; }
         footer { border-top: 1px solid var(--line); padding: 19px 0 25px; color: #737b73; font-size: 11px; }
-        @media (max-width: 760px) { .wrap { width: min(100% - 32px, 560px); } .topbar { height: 68px; } .nav a:not(.nav-cta) { display: none; } .hero { grid-template-columns: 1fr; gap: 24px; padding: 42px 0; } .hero-art { min-height: 210px; } .rooms { grid-template-columns: 1fr; } .card-art { height: 175px; } .section-heading { align-items: start; flex-direction: column; } h2 { font-size: 31px; } }
+        @media (max-width: 760px) { .wrap { width: min(100% - 32px, 560px); } .topbar { height: 68px; } .nav a:not(.nav-cta) { display: none; } .hero { grid-template-columns: 1fr; gap: 24px; padding: 42px 0; } .hero-art { min-height: 210px; } .rooms { grid-template-columns: 1fr; } .card-art { height: 175px; } .section-heading { align-items: start; flex-direction: column; } .search-fields { grid-template-columns: 1fr; } h2 { font-size: 31px; } }
     </style>
 </head>
 <body>
@@ -62,6 +69,25 @@
         <section class="hero" id="about">
             <div><div class="eyebrow">Your WRC weekend, well spent</div><h1>A little room to breathe between the stages.</h1><p class="hero-copy">Settle into the calm of Master's House, a welcoming countryside retreat for rally fans, families, and curious travellers.</p></div>
             <div class="hero-art" role="img" aria-label="Illustrated green hills at sunset"><span class="sun"></span><span class="ridge"></span><span class="ridge two"></span><span class="foreground"></span><span class="art-label">The highlands are calling</span></div>
+        </section>
+        <section class="availability-search" aria-labelledby="availability-heading">
+            <div class="eyebrow">Choose your dates</div>
+            <h2 id="availability-heading">See what is available</h2>
+            <form action="{{ route('availability.search') }}" method="GET" class="search-fields">
+                <label>Arrival date
+                    <input type="date" name="arrival_date" min="{{ now()->toDateString() }}" value="{{ old('arrival_date', request('arrival_date')) }}" required>
+                </label>
+                <label>Departure date
+                    <input type="date" name="departure_date" value="{{ old('departure_date', request('departure_date')) }}" required>
+                </label>
+                <label>Guests
+                    <input type="number" name="guests" min="1" max="4" value="{{ old('guests', request('guests', 2)) }}" required>
+                </label>
+                <button type="submit">Check availability</button>
+            </form>
+            @if ($errors->has('arrival_date') || $errors->has('departure_date') || $errors->has('guests'))
+                <p class="search-error" role="alert">{{ $errors->first('arrival_date') ?: ($errors->first('departure_date') ?: $errors->first('guests')) }}</p>
+            @endif
         </section>
         <section id="rooms" aria-labelledby="rooms-heading">
             <div class="section-heading"><div><div class="eyebrow">Find your place</div><h2 id="rooms-heading">Stays made for slowing down</h2></div><div class="dates">WRC WEEKEND · 2026</div></div>
@@ -88,7 +114,7 @@
                     <div role="status" style="margin-bottom:18px;padding:13px 15px;border:1px solid #bdd0bf;border-radius:5px;background:#edf4ec;color:#315b46;font-size:13px">{{ session('booking_success') }}</div>
                 @endif
                 @if ($errors->any())
-                    <div role="alert" style="margin-bottom:18px;padding:13px 15px;border:1px solid #e4c2b9;border-radius:5px;background:#fbefec;color:#8b3d32;font-size:13px">Please review the highlighted details and try again.</div>
+                    <div role="alert" style="margin-bottom:18px;padding:13px 15px;border:1px solid #e4c2b9;border-radius:5px;background:#fbefec;color:#8b3d32;font-size:13px">{{ $errors->first() }}</div>
                 @endif
 
                 <form action="{{ route('bookings.store') }}" method="POST">
@@ -110,21 +136,22 @@
                             <select name="room_name" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;background:white;font:inherit">
                                 <option value="">Choose a stay</option>
                                 @foreach (['Garden Cottage', 'Rally View Suite', 'Family Lodge'] as $roomName)
-                                    <option value="{{ $roomName }}" @selected(old('room_name') === $roomName)>{{ $roomName }}</option>
+                                    <option value="{{ $roomName }}" @selected(old('room_name', request('room_name')) === $roomName)>{{ $roomName }}</option>
                                 @endforeach
                             </select>
                             @error('room_name') <span style="color:#9b4537;font-size:11px">{{ $message }}</span> @enderror
                         </label>
                         <label style="display:block;color:#46554a;font-size:12px;font-weight:650">Arrival date
-                            <input name="arrival_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('arrival_date') }}" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;background:white;font:inherit">
+                            <input name="arrival_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('arrival_date', request('arrival_date')) }}" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;background:white;font:inherit">
                             @error('arrival_date') <span style="color:#9b4537;font-size:11px">{{ $message }}</span> @enderror
                         </label>
                         <label style="display:block;color:#46554a;font-size:12px;font-weight:650">Departure date
-                            <input name="departure_date" type="date" value="{{ old('departure_date') }}" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;background:white;font:inherit">
+                            <input name="departure_date" type="date" value="{{ old('departure_date', request('departure_date')) }}" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;background:white;font:inherit">
                             @error('departure_date') <span style="color:#9b4537;font-size:11px">{{ $message }}</span> @enderror
                         </label>
                         <label style="display:block;color:#46554a;font-size:12px;font-weight:650">Guests
-                            <input name="guests" type="number" min="1" max="8" value="{{ old('guests', 2) }}" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;font:inherit">
+                            <input name="guests" type="number" min="1" max="4" value="{{ old('guests', request('guests', 2)) }}" required style="display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cfd4c9;border-radius:4px;font:inherit">
+                            <small style="display:block;margin-top:5px;color:#68736a;font-weight:400">Cottage and Suite: up to 2; Family Lodge: up to 4.</small>
                             @error('guests') <span style="color:#9b4537;font-size:11px">{{ $message }}</span> @enderror
                         </label>
                     </div>
