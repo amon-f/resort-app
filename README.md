@@ -1,58 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Master's House
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Master's House is a Laravel web application prototype for a countryside resort stay during WRC weekend. It presents a small selection of accommodation options and lets visitors send a booking request for the resort team to review.
 
-## About Laravel
+The project is intentionally a request-based demo: it does not check live availability, confirm a reservation, or collect payment details.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## What the application does
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Shows three sample stays: Garden Cottage, Rally View Suite, and Family Lodge.
+- Displays room descriptions, nightly prices in Kenyan shillings (KSh), and sample amenities.
+- Provides a booking request form for a guest's contact details, stay type, arrival and departure dates, guest count, and optional notes.
+- Validates the submitted details and stores valid requests in the `booking_requests` database table with a `pending` status.
+- Shows a success message after a request is submitted and validation feedback when a submission needs correction.
+- Adapts the landing page layout for smaller screens.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The room descriptions, prices, and WRC weekend date label are sample content in the application and should be confirmed before being used for real bookings.
 
-## Learning Laravel
+## Technology
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP 8.3 or later
+- Laravel 13
+- SQLite by default, configurable through Laravel's database environment variables
+- Composer for PHP dependencies
+- Node.js and npm for the Vite asset pipeline
+- Vite for frontend asset development; Tailwind CSS 4 is included in the frontend toolchain
+- Pest for automated tests
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Getting started
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Requirements
 
-## Agentic Development
+Install PHP 8.3+, Composer, Node.js, and npm. The PHP installation must include the extensions required by Laravel and the configured database driver.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Install dependencies and configure the application
 
-```bash
-composer require laravel/boost --dev
+From the project directory:
 
-php artisan boost:install
+```powershell
+composer install
+Copy-Item .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+If `Copy-Item` reports that `.env` already exists, keep your existing local configuration. The default configuration uses SQLite. Ensure the SQLite database file exists before running migrations:
 
-## Contributing
+```powershell
+if (-not (Test-Path database\database.sqlite)) {
+    New-Item -ItemType File database\database.sqlite | Out-Null
+}
+php artisan migrate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Install the JavaScript dependencies and compile the frontend assets:
 
-## Code of Conduct
+```powershell
+npm install
+npm run build
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Alternatively, after ensuring `database\database.sqlite` exists, the Composer setup script performs the initial application setup, including dependency installation, environment/key setup, migrations, and the frontend build:
 
-## Security Vulnerabilities
+```powershell
+composer run setup
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Run the application
 
-## License
+Start Laravel's development services with:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```powershell
+composer run dev
+```
+
+The application is served locally by Laravel. Open the URL shown in the command output (typically `http://localhost:8000`). To work on frontend assets with Vite's hot reload in a separate terminal, use:
+
+```powershell
+npm run dev
+```
+
+## Booking request flow
+
+The landing page is served by `GET /`. Visitors submit the form to `POST /bookings`. Laravel validates the request and writes it to `booking_requests`; accepted fields are:
+
+| Field | Requirements |
+| --- | --- |
+| `full_name` | Required; up to 120 characters |
+| `email` | Required; valid email address; up to 254 characters |
+| `phone` | Optional; up to 32 characters |
+| `room_name` | Required; one of the three displayed stay types |
+| `arrival_date` | Required; today or a later date |
+| `departure_date` | Required; later than the arrival date |
+| `guests` | Required; integer from 1 through 8 |
+| `notes` | Optional; up to 1,000 characters |
+
+Successful requests are stored with a `pending` status. A team member must follow up with the guest to confirm availability. There is currently no staff dashboard or automated confirmation workflow.
+
+## Project layout
+
+- `routes/web.php` — landing page and booking request routes, sample room data, and request validation.
+- `resources/views/rooms.blade.php` — resort landing page, room cards, and booking form.
+- `database/migrations/` — database schema, including the booking request table.
+- `app/Models/` — Eloquent models.
+- `resources/css/` and `resources/js/` — frontend entry points managed by Vite.
+- `tests/` — Pest unit and feature tests.
+
+## Development and testing
+
+Compile frontend assets for production:
+
+```powershell
+npm run build
+```
+
+Run the automated test suite:
+
+```powershell
+composer run test
+```
+
+The test environment uses an in-memory SQLite database. Add feature tests for booking validation and persistence when extending the booking flow.
+
+## Current scope
+
+This repository is a prototype and currently has no live inventory or availability lookup, user-facing booking management, email delivery, payment processing, or production-ready reservation confirmation. The room catalog is defined in the web route rather than maintained as database records.
