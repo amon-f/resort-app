@@ -137,6 +137,8 @@ Route::get('/login', fn () => to_route('staff.login'))->name('login');
 
 Route::middleware('auth')->prefix('staff')->name('staff.')->group(function () {
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/export', [StaffBookingController::class, 'export'])->name('bookings.export');
+    Route::get('/calendar', [StaffBookingController::class, 'calendar'])->name('calendar');
     Route::patch('/bookings/{id}/status', [StaffBookingController::class, 'update'])
         ->whereNumber('id')
         ->name('bookings.status');
