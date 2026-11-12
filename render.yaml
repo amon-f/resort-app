@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: resort-app
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /up
+    initialDeployHook: php artisan db:seed --force
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          name: resort-app
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false
+      - key: STAFF_EMAIL
+        sync: false
+      - key: STAFF_PASSWORD
+        sync: false
+      - key: MAIL_MAILER
+        value: log
+      - key: NGINX_HTTP_PORT
+        value: "10000"
