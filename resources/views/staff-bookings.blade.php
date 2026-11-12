@@ -14,6 +14,13 @@
         .sub { color: #6e756e; margin: 8px 0 24px; }
         .notice { padding: 12px 16px; margin-bottom: 18px; border-radius: 8px; background: #e4efe4; color: #28533c; }
         .error-notice { padding: 12px 16px; margin-bottom: 18px; border-radius: 8px; background: #fbefec; color: #8b3d32; }
+        .warning-notice { padding: 12px 16px; margin-bottom: 18px; border-radius: 8px; background: #fff2d8; color: #765313; }
+        .filters { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 0 0 20px; padding: 16px; border: 1px solid #e3e0d7; border-radius: 10px; background: #fffefa; }
+        .filters label { display: grid; gap: 5px; color: #667068; font-size: 12px; }
+        .filters select, .filters input { min-width: 190px; padding: 9px 10px; border: 1px solid #d6d8cf; border-radius: 7px; background: white; font: inherit; }
+        .filters button { margin: 0; padding: 10px 14px; }
+        .filters .export-button { border: 1px solid #37634d; background: #fffefa; color: #37634d; }
+        .clear-filter { padding: 9px 4px; color: #37634d; font-size: 13px; }
         .table-wrap { overflow-x: auto; background: #fffefa; border: 1px solid #e3e0d7; border-radius: 12px; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid #eeece5; }
@@ -38,16 +45,37 @@
 </header>
 <main class="wrap">
     <h1>Booking requests</h1>
-    <p class="sub">Review guest details and update each request as you follow up.</p>
+    <p class="sub">Review guest details and update each request as you follow up. <a href="{{ route('staff.calendar') }}" style="color:#37634d;font-weight:700">View calendar</a></p>
     @if (session('status'))
         <div class="notice" role="status">{{ session('status') }}</div>
+    @endif
+    @if (session('warning'))
+        <div class="warning-notice" role="alert">{{ session('warning') }}</div>
     @endif
     @if ($errors->any())
         <div class="error-notice" role="alert">{{ $errors->first() }}</div>
     @endif
+    <form class="filters" method="GET" action="{{ route('staff.bookings.index') }}">
+        <label for="status-filter">Status
+            <select id="status-filter" name="status">
+                <option value="">All statuses</option>
+                @foreach (['pending' => 'Pending', 'confirmed' => 'Confirmed', 'declined' => 'Declined'] as $value => $label)
+                    <option value="{{ $value }}" @selected($statusFilter === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </label>
+        <label for="booking-search">Guest name or email
+            <input id="booking-search" type="search" name="q" value="{{ $searchTerm }}" maxlength="120" placeholder="Search bookings">
+        </label>
+        <button type="submit">Apply filters</button>
+        <button class="export-button" type="submit" formaction="{{ route('staff.bookings.export') }}">Download CSV</button>
+        @if ($statusFilter !== '' || $searchTerm !== '')
+            <a class="clear-filter" href="{{ route('staff.bookings.index') }}">Clear filters</a>
+        @endif
+    </form>
     <div class="table-wrap">
         @if ($bookings->isEmpty())
-            <div class="empty">There are no booking requests yet.</div>
+            <div class="empty">{{ $statusFilter !== '' || $searchTerm !== '' ? 'No booking requests match those filters.' : 'There are no booking requests yet.' }}</div>
         @else
             <table>
                 <thead><tr><th>Guest</th><th>Stay</th><th>Dates</th><th>Guests</th><th>Notes</th><th>Status</th></tr></thead>
